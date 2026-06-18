@@ -27,62 +27,53 @@ with tab1:
         else:
             st.warning("Vui lòng nhập API Key ở menu bên trái.")
 
-import streamlit as st
-import random
-import json
-import re
-from groq import Groq
-
-# Cấu hình API Key an toàn
-def get_groq_client():
-    try:
-        # Ưu tiên lấy từ secrets, nếu không có thì lấy từ biến môi trường
-        api_key = st.secrets.get("GROQ_API_KEY")
-        return Groq(api_key=api_key)
-    except:
-        st.error("Chưa cấu hình GROQ_API_KEY trong Secrets!")
-        return None
-
 with tab2:
-    st.subheader("✍️ Luyện Viết (50 Câu từ AI)")
-    client = get_groq_client()
+    st.subheader("Luyện Viết")
 
-    if client and 'danh_sach_50_cau' not in st.session_state:
-        with st.spinner("AI đang tạo 50 câu, vui lòng đợi..."):
-            try:
-                prompt = "Tạo 50 câu tiếng Anh ngắn về đời sống. Trả về đúng định dạng JSON: [{\"vi\": \"nghĩa\", \"en\": \"câu\"}, ...]. Không giải thích."
-                response = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "user", "content": prompt}])
-                
-                content = response.choices[0].message.content
-                # Regex để lọc đúng khối [...]
-                match = re.search(r'\[.*\]', content, re.DOTALL)
-                if match:
-                    st.session_state.danh_sach_50_cau = json.loads(match.group())
-                    random.shuffle(st.session_state.danh_sach_50_cau)
-                    st.session_state.current_idx = 0
-                    st.session_state.revealed = [False] * 20
-                else:
-                    st.error("AI không trả về đúng định dạng.")
-            except Exception as e:
-                st.error(f"Lỗi hệ thống: {e}")
+    # 1. Danh sách câu hỏi
+    danh_sach_cau = [
+        {"vi": "Tôi mang sách trong ba lô.", "en": "I carry books in my backpack"},
+        {"vi": "Trời đang mưa rất to.", "en": "It is raining very hard"},
+        {"vi": "Tôi thích học lập trình.", "en": "I like to learn programming"}
+    ]
 
-    # Hiển thị bài tập nếu đã có dữ liệu
-    if 'danh_sach_50_cau' in st.session_state:
-        cau = st.session_state.danh_sach_50_cau[st.session_state.current_idx]
-        st.write(f"Dịch: **{cau['vi']}**")
-        
-        user_input = st.text_input("Nhập câu:")
-        if st.button("Kiểm tra"):
-            if user_input.strip().lower() == cau['en'].lower():
-                st.success("Chính xác!")
-                # Giải thích
-                res = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "user", "content": f"Giải thích ngắn gọn: {cau['en']}"}])
-                st.info(res.choices[0].message.content)
-                if st.button("Câu tiếp theo"):
-                    st.session_state.current_idx += 1
-                    st.rerun()
+    # 2. Khởi tạo trạng thái cho câu hiện tại
+    if 'current_idx' not in st.session_state:
+        st.session_state.current_idx = 0
+        st.session_state.revealed = [False] * len(danh_sach_cau[0]["en"].split())
+
+    # Lấy câu hiện tại
+    cau_hien_tai = danh_sach_cau[st.session_state.current_idx]
+    words = cau_hien_tai["en"].split()
+
+    st.write(f"Dịch câu: **{cau_hien_tai['vi']}**")
+
+    # 3. Khu vực hiển thị gợi ý (Bấm vào mới hiện)
+    container = st.container(border=True)
+    with container:
+        cols = st.columns(len(words))
+        for i, word in enumerate(words):
+            if st.session_state.revealed[i]:
+                cols[i].button(word, key=f"btn_{i}", disabled=True)
             else:
-                st.error("Sai rồi, thử lại!")
+                # Ẩn bằng dấu *
+                masked = word[0] + "*" * (len(word) - 1) if len(word) > 1 else "*"
+                if cols[i].button(masked, key=f"btn_{i}"):
+                    st.session_state.revealed[i] = True
+                    st.rerun()
+
+    # 4. Kiểm tra và chuyển câu
+    user_input = st.text_input("Nhập câu hoàn chỉnh:", key="user_input")
+    if st.button("Kiểm tra"):
+        if user_input.strip().lower() == cau_hien_tai["en"].lower():
+            st.success("Chính xác! Đang tải câu mới...")
+            
+            # Reset trạng thái cho câu tiếp theo
+            st.session_state.current_idx = (st.session_state.current_idx + 1) % len(danh_sach_cau)
+            st.session_state.revealed = [False] * len(danh_sach_cau[st.session_state.current_idx]["en"].split())
+            st.rerun() # Tải lại để hiển thị câu mới
+        else:
+            st.error("Chưa đúng, thử lại nhé!")
 with tab3:
     st.subheader("📚 Từ Vựng Chuyên Ngành")
     
