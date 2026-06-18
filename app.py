@@ -27,32 +27,36 @@ with tab1:
         else:
             st.warning("Vui lòng nhập API Key ở menu bên trái.")
 
+import streamlit as st
+
 with tab2:
     st.subheader("Luyện Viết")
     
-    # Dữ liệu bài tập
-    cau_goc = {
-        "vi": "Tôi rất mong được hợp tác với công ty của bạn.",
-        "en": "I look forward to cooperating with your company.",
-        "goi_y": ["look forward to", "cooperating", "company"]
-    }
+    # Câu mẫu
+    cau_en = "I carry books in my backpack"
+    words = cau_en.split()
     
-    st.write(f"Dịch câu: **{cau_goc['vi']}**")
-    
-    # Hiển thị gợi ý từ vựng
-    st.markdown("💡 **Gợi ý từ vựng:**")
-    cols = st.columns(len(cau_goc['goi_y']))
-    for i, word in enumerate(cau_goc['goi_y']):
-        cols[i].code(word)
-        
-    user_trans = st.text_input("Nhập bản dịch của bạn:")
-    
-    if st.button("Kiểm tra"):
-        if user_trans.lower().strip() == cau_goc['en'].lower().strip():
-            st.success("Chính xác! 🎉")
-        else:
-            st.error(f"Chưa chính xác. Đáp án đúng là: {cau_goc['en']}")
+    # Khởi tạo trạng thái cho từng từ (chưa mở)
+    if 'revealed' not in st.session_state:
+        st.session_state.revealed = [False] * len(words)
 
+    st.write("Dịch câu: **Tôi mang sách trong ba lô.**")
+    
+    # Hiển thị các ô từ
+    cols = st.columns(len(words))
+    for i, word in enumerate(words):
+        if st.session_state.revealed[i]:
+            cols[i].button(word, key=f"btn_{i}", disabled=True)
+        else:
+            # Tạo hiệu ứng ẩn chữ (ví dụ: 'ca***')
+            masked_word = word[0:2] + "*" * (len(word) - 2) if len(word) > 2 else "*" * len(word)
+            if cols[i].button(masked_word, key=f"btn_{i}"):
+                st.session_state.revealed[i] = True
+                st.rerun()
+
+    if st.button("Hiện tất cả"):
+        st.session_state.revealed = [True] * len(words)
+        st.rerun()
 with tab3:
     st.subheader("Từ Vựng Chuyên Ngành")
     nganh = st.selectbox("Chọn chuyên ngành:", ["IT", "Y học", "Kinh tế"])
