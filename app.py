@@ -32,44 +32,49 @@ import streamlit as st
 with tab2:
     st.subheader("Luyện Viết")
 
+    # Danh sách câu hỏi
     danh_sach_cau = [
         {"vi": "Tôi mang sách trong ba lô.", "en": "I carry books in my backpack", "exp": "Cấu trúc: S + V + O. 'Carry' là động từ chính, 'in' là giới từ chỉ nơi chốn."},
         {"vi": "Trời đang mưa rất to.", "en": "It is raining very hard", "exp": "Cấu trúc: Thì Hiện tại tiếp diễn (S + am/is/are + V-ing) dùng để diễn tả sự việc đang xảy ra."},
         {"vi": "Tôi thích học lập trình.", "en": "I like to learn programming", "exp": "Cấu trúc: 'Like + to Verb/V-ing'. 'Learn' là động từ nguyên mẫu có 'to' sau 'like'."}
     ]
 
+    # Khởi tạo trạng thái (ĐÃ SỬA LỖI Ở ĐÂY)
     if 'current_idx' not in st.session_state:
         st.session_state.current_idx = 0
         st.session_state.revealed = [False] * len(danh_sach_cau[0]["en"].split())
-        st.session_state.show_explanation = False # Trạng thái ẩn giải thích
+        st.session_state.show_explanation = False 
 
+    # Lấy câu hiện tại
     cau_hien_tai = danh_sach_cau[st.session_state.current_idx]
     words = cau_hien_tai["en"].split()
 
     st.write(f"Dịch câu: **{cau_hien_tai['vi']}**")
 
-    # Hiển thị các từ gợi ý
-    cols = st.columns(len(words))
-    for i, word in enumerate(words):
-        if st.session_state.revealed[i]:
-            cols[i].button(word, key=f"btn_{i}", disabled=True)
-        else:
-            masked = word[0] + "*" * (len(word) - 1) if len(word) > 1 else "*"
-            if cols[i].button(masked, key=f"btn_{i}"):
-                st.session_state.revealed[i] = True
-                st.rerun()
+    # Khu vực hiển thị gợi ý
+    container = st.container(border=True)
+    with container:
+        cols = st.columns(len(words))
+        for i, word in enumerate(words):
+            if st.session_state.revealed[i]:
+                cols[i].button(word, key=f"btn_{i}", disabled=True)
+            else:
+                masked = word[0] + "*" * (len(word) - 1) if len(word) > 1 else "*"
+                if cols[i].button(masked, key=f"btn_{i}"):
+                    st.session_state.revealed[i] = True
+                    st.rerun()
 
+    # Kiểm tra
     user_input = st.text_input("Nhập câu hoàn chỉnh:", key="user_input")
-    
-    # Nút Kiểm tra
     if st.button("Kiểm tra"):
         if user_input.strip().lower() == cau_hien_tai["en"].lower():
             st.success("Chính xác!")
-            st.session_state.show_explanation = True # Kích hoạt hiện giải thích
+            st.session_state.show_explanation = True
+            st.rerun()
         else:
             st.error("Chưa đúng, thử lại nhé!")
 
-    # Hiển thị giải thích nếu trả lời đúng
+    # Hiển thị giải thích
     if st.session_state.show_explanation:
         with st.expander("🔍 Xem giải thích chi tiết", expanded=True):
             st.write(f"**Cấu trúc câu:** {cau_hien_tai['exp']}")
