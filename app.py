@@ -79,36 +79,40 @@ with tab2:
 with tab3:
     st.subheader("Từ Vựng Chuyên Ngành")
     
-    # 1. Mở rộng danh sách chuyên ngành
-    ds_nganh = ["IT", "Y học", "Kinh tế", "Logistics", "Marketing", "Du lịch", "Luật", "Xây dựng", "Giáo dục", "Tài chính"]
+    ds_nganh = ["IT", "Y học", "Kinh tế", "Logistics", "Marketing", "Du lịch", "Luật", "Xây dựng"]
     nganh = st.selectbox("Chọn chuyên ngành:", ds_nganh)
     
-    # 2. Thêm lựa chọn loại bài học
-    loai_bai = st.radio("Chọn dạng bài tập:", ["Điền khuyết", "Nối từ"])
+    # Khởi tạo bộ nhớ cho tab3
+    if 'vocab_list' not in st.session_state:
+        st.session_state.vocab_list = []
     
-    if st.button("Tạo bài học"):
-        if not api_key:
-            st.warning("Vui lòng nhập Groq API Key ở menu bên trái.")
-        else:
-            st.info(f"Đang tạo bài học dạng **{loai_bai}** cho ngành **{nganh}** bằng AI...")
-            
-            # Gọi AI để tạo nội dung bài học
+    # Bước 1: Tạo bộ từ vựng
+    if st.button("1. Tạo danh sách từ vựng"):
+        client = Groq(api_key=api_key)
+        prompt = f"Liệt kê 5 từ vựng tiếng Anh chuyên ngành {nganh} quan trọng kèm nghĩa tiếng Việt. Trả về định dạng: Từ - Nghĩa."
+        response = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "user", "content": prompt}])
+        st.session_state.vocab_list = response.choices[0].message.content
+        st.rerun()
+
+    if st.session_state.vocab_list:
+        st.write("### Danh sách từ vựng:")
+        st.info(st.session_state.vocab_list)
+        
+        # Bước 2: Chọn dạng bài và tạo bài tập dựa trên danh sách trên
+        loai_bai = st.radio("Chọn dạng bài tập:", ["Điền khuyết", "Nối từ"])
+        if st.button("2. Tạo bài tập từ danh sách trên"):
+            prompt_bai_tap = f"Dựa trên danh sách từ vựng này: {st.session_state.vocab_list}. Hãy tạo một bài tập {loai_bai}. Có kèm gợi ý cho từng từ."
             client = Groq(api_key=api_key)
-            prompt = f"Hãy tạo một bài tập {loai_bai} tiếng Anh chuyên ngành {nganh}. Chỉ đưa ra nội dung bài tập, không giải thích."
-            
-            try:
-                response = client.chat.completions.create(
-                    model="llama-3.1-8b-instant",
-                    messages=[{"role": "user", "content": prompt}]
-                )
-                noi_dung = response.choices[0].message.content
-                st.write("### Nội dung bài tập:")
-                st.markdown(noi_dung)
-                
-                # Ô nhập liệu cho người dùng trả lời
-                tra_loi = st.text_area("Nhập câu trả lời của bạn:")
-                if st.button("Kiểm tra đáp án"):
-                    st.write("Đang kiểm tra với AI...")
-                    # Ở đây bạn có thể gọi thêm một prompt check đáp án
-            except Exception as e:
-                st.error(f"Có lỗi xảy ra: {e}")
+            response = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "user", "content": prompt_bai_tap}])
+            st.session_state.bai_tap = response.choices[0].message.content
+            st.rerun()
+
+    # Bước 3: Hiển thị bài tập và làm bài
+    if 'bai_tap' in st.session_state:
+        st.write("---")
+        st.write("### Làm bài tập:")
+        st.markdown(st.session_state.bai_tap)
+        tra_loi = st.text_area("Nhập đáp án của bạn:")
+        if st.button("Kiểm tra đáp án"):
+            st.write("AI đang chấm điểm...")
+            # Bạn có thể gọi thêm prompt kiểm tra đáp án ở đây
