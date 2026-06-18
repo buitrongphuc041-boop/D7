@@ -28,86 +28,61 @@ with tab1:
             st.warning("Vui lòng nhập API Key ở menu bên trái.")
 
 import streamlit as st
-
-import streamlit as st
 import random
 import json
 import re
 from groq import Groq
 
+# Cấu hình API Key an toàn
+def get_groq_client():
+    try:
+        # Ưu tiên lấy từ secrets, nếu không có thì lấy từ biến môi trường
+        api_key = st.secrets.get("GROQ_API_KEY")
+        return Groq(api_key=api_key)
+    except:
+        st.error("Chưa cấu hình GROQ_API_KEY trong Secrets!")
+        return None
+
 with tab2:
     st.subheader("✍️ Luyện Viết (50 Câu từ AI)")
+    client = get_groq_client()
 
-    # 1. Khởi tạo danh sách 50 câu từ AI
-    if 'danh_sach_50_cau' not in st.session_state:
-        with st.spinner("AI đang tạo 50 câu luyện viết, vui lòng đợi..."):
+    if client and 'danh_sach_50_cau' not in st.session_state:
+        with st.spinner("AI đang tạo 50 câu, vui lòng đợi..."):
             try:
-                client = Groq(api_key=st.secrets["GROQ_API_KEY"]) # Đảm bảo bạn đã lưu key trong secrets
-                prompt = """
-                Tạo danh sách 50 câu tiếng Anh ngắn, thông dụng về đời sống.
-                Trả về JSON thuần tuý với định dạng: [{"vi": "nghĩa tiếng Việt", "en": "câu tiếng Anh"}, ...]
-                Không giải thích, không kèm markdown, chỉ trả về chuỗi JSON.
-                """
-                response = client.chat.completions.create(
-                    model="llama-3.1-8b-instant", 
-                    messages=[{"role": "user", "content": prompt}]
-                )
+                prompt = "Tạo 50 câu tiếng Anh ngắn về đời sống. Trả về đúng định dạng JSON: [{\"vi\": \"nghĩa\", \"en\": \"câu\"}, ...]. Không giải thích."
+                response = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "user", "content": prompt}])
                 
-                raw_content = response.choices[0].message.content
-                # Làm sạch chuỗi: tìm đoạn bắt đầu bằng [ và kết thúc bằng ]
-                match = re.search(r'\[.*\]', raw_content, re.DOTALL)
+                content = response.choices[0].message.content
+                # Regex để lọc đúng khối [...]
+                match = re.search(r'\[.*\]', content, re.DOTALL)
                 if match:
-                    json_str = match.group()
-                    # Chuyển đổi an toàn hơn
-                    st.session_state.danh_sach_50_cau = json.loads(json_str)
-                else:
-                    st.error("AI trả về định dạng không mong đợi. Vui lòng thử lại.")
-                    st.session_state.danh_sach_50_cau = []
-                    
-                random.shuffle(st.session_state.danh_sach_50_cau)
-                st.session_state.current_idx = 0
-                st.session_state.revealed = [False] * 20
-            except Exception as e:
-                st.error(f"Lỗi kết nối AI: {e}")
-                st.session_state.danh_sach_50_cau = []
-
-    # 2. Xử lý hiển thị câu hỏi
-    if 'danh_sach_50_cau' in st.session_state and st.session_state.danh_sach_50_cau:
-        cau_hien_tai = st.session_state.danh_sach_50_cau[st.session_state.current_idx]
-        words = cau_hien_tai["en"].split()
-        
-        st.write(f"Câu {st.session_state.current_idx + 1}/50: Dịch câu: **{cau_hien_tai['vi']}**")
-
-        container = st.container(border=True)
-        with container:
-            cols = st.columns(len(words))
-            for i, word in enumerate(words):
-                if i < len(st.session_state.revealed) and st.session_state.revealed[i]:
-                    cols[i].button(word, key=f"btn_{i}", disabled=True)
-                else:
-                    masked = word[0] + "*" * (len(word) - 1) if len(word) > 1 else "*"
-                    if cols[i].button(masked, key=f"btn_{i}"):
-                        st.session_state.revealed[i] = True
-                        st.rerun()
-
-        user_input = st.text_input("Nhập câu hoàn chỉnh:", key="user_input")
-        if st.button("Kiểm tra"):
-            if user_input.strip().lower() == cau_hien_tai["en"].lower():
-                st.success("Chính xác!")
-                # Gọi AI giải thích
-                client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-                res = client.chat.completions.create(
-                    model="llama-3.1-8b-instant", 
-                    messages=[{"role": "user", "content": f"Giải thích ngữ pháp câu: '{cau_hien_tai['en']}'"}]
-                )
-                st.info(f"💡 **Giải thích:** {res.choices[0].message.content}")
-                
-                if st.button("Tiếp theo"):
-                    st.session_state.current_idx = (st.session_state.current_idx + 1) % len(st.session_state.danh_sach_50_cau)
+                    st.session_state.danh_sach_50_cau = json.loads(match.group())
+                    random.shuffle(st.session_state.danh_sach_50_cau)
+                    st.session_state.current_idx = 0
                     st.session_state.revealed = [False] * 20
+                else:
+                    st.error("AI không trả về đúng định dạng.")
+            except Exception as e:
+                st.error(f"Lỗi hệ thống: {e}")
+
+    # Hiển thị bài tập nếu đã có dữ liệu
+    if 'danh_sach_50_cau' in st.session_state:
+        cau = st.session_state.danh_sach_50_cau[st.session_state.current_idx]
+        st.write(f"Dịch: **{cau['vi']}**")
+        
+        user_input = st.text_input("Nhập câu:")
+        if st.button("Kiểm tra"):
+            if user_input.strip().lower() == cau['en'].lower():
+                st.success("Chính xác!")
+                # Giải thích
+                res = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "user", "content": f"Giải thích ngắn gọn: {cau['en']}"}])
+                st.info(res.choices[0].message.content)
+                if st.button("Câu tiếp theo"):
+                    st.session_state.current_idx += 1
                     st.rerun()
             else:
-                st.error("Chưa đúng, thử lại nhé!")
+                st.error("Sai rồi, thử lại!")
 with tab3:
     st.subheader("📚 Từ Vựng Chuyên Ngành")
     
