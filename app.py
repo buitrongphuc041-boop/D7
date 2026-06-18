@@ -1,17 +1,29 @@
 import streamlit as st
-import random
-from groq import Groq
 
-# Cấu hình giao diện Streamlit
-st.set_page_config(page_title="AI ENGLISH TUTOR", layout="wide")
+# Cấu hình trang phải là lệnh đầu tiên
+st.set_page_config(layout="wide") 
 
-st.title("🎓 AI ENGLISH TUTOR")
+# Đoạn mã CSS để ẩn các thành phần mặc định
+hide_streamlit_style = """
+            <style>
+            /* Ẩn menu 3 chấm ở góc phải */
+            #MainMenu {visibility: hidden;}
+            
+            /* Ẩn footer (thông báo "Made with Streamlit") */
+            footer {visibility: hidden;}
+            
+            /* Ẩn thanh header trên cùng (chứa nút Share, chỉnh sửa, logo...) */
+            header {visibility: hidden;}
+            
+            /* Ẩn nút "Manage app" ở góc dưới cùng */
+            [data-testid="stAppDeployButton"] {
+                visibility: hidden;
+            }
+            </style>
+            """
 
-# Nhập API Key
-api_key = st.sidebar.text_input("Groq API Key", type="password")
-
-# Tabs cho các chức năng
-tab1, tab2, tab3 = st.tabs(["💬 Chat", "✍️ Luyện Viết", "📚 Từ Vựng"])
+# Kích hoạt CSS
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 with tab1:
     st.subheader("Trợ lý Giao Tiếp")
