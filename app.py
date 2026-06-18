@@ -78,33 +78,47 @@ with tab2:
             st.error("Chưa đúng, thử lại nhé!")
 with tab3:
     st.subheader("📚 Từ Vựng Chuyên Ngành")
+    
+    # 1. Chọn chuyên ngành
     ds_nganh = ["IT", "Y học", "Kinh tế", "Logistics", "Marketing", "Du lịch", "Luật", "Xây dựng"]
     nganh = st.selectbox("Chọn chuyên ngành:", ds_nganh)
     
+    # Khởi tạo bộ nhớ an toàn
     if 'vocab_list' not in st.session_state or not isinstance(st.session_state.vocab_list, list):
         st.session_state.vocab_list = []
 
-    # SỬA LỖI: Dùng {{ và }} để tránh ValueError trong f-string
+    # 2. Nút tạo từ vựng (Sử dụng {{ }} để tránh lỗi f-string)
     if st.button("Tạo 5 từ vựng mới"):
         client = Groq(api_key=api_key)
-        prompt = f"Tạo 5 từ vựng chuyên ngành {nganh} kèm nghĩa. Chỉ trả về chuỗi JSON định dạng: [{{'tu': 'word', 'nghia': 'meaning'}}, ...]"
+        prompt = f"Tạo 5 từ vựng chuyên ngành {nganh} kèm nghĩa tiếng Việt. Trả về đúng định dạng JSON: [{{'tu': 'word', 'nghia': 'meaning'}}, ...]"
         
         try:
             with st.spinner("AI đang tạo từ..."):
                 response = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "user", "content": prompt}])
                 import json, re
                 content = response.choices[0].message.content
-                # Tìm chuỗi JSON
+                # Lọc lấy đoạn JSON chuẩn
                 match = re.search(r'\[.*\]', content, re.DOTALL)
                 if match:
-                    st.session_state.vocab_list = json.loads(match.group())
+                    json_str = match.group().replace("'", '"')
+                    st.session_state.vocab_list = json.loads(json_str)
                     st.rerun()
                 else:
-                    st.error("AI trả về sai định dạng, hãy thử lại.")
+                    st.error("Lỗi định dạng, vui lòng thử lại.")
         except Exception as e:
             st.error(f"Lỗi: {e}")
 
-    # Hiển thị danh sách từ vựng an toàn
-    for idx, item in enumerate(st.session_state.vocab_list):
-        if isinstance(item, dict):
+    # 3. Thêm từ thủ công (để học tiếp)
+    with st.expander("➕ Thêm từ thủ công"):
+        tu_input = st.text_input("Từ tiếng Anh:")
+        nghia_input = st.text_input("Nghĩa tiếng Việt:")
+        if st.button("Lưu từ vào danh sách"):
+            if tu_input and nghia_input:
+                st.session_state.vocab_list.append({"tu": tu_input, "nghia": nghia_input})
+                st.rerun()
+
+    # 4. Hiển thị danh sách
+    if st.session_state.vocab_list:
+        st.write("### Danh sách từ vựng của bạn:")
+        for idx, item in enumerate(st.session_state.vocab_list):
             st.write(f"{idx+1}. **{item.get('tu', 'N/A')}**: {item.get('nghia', 'N/A')}")
