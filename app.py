@@ -78,7 +78,37 @@ with tab2:
             st.error("Chưa đúng, thử lại nhé!")
 with tab3:
     st.subheader("Từ Vựng Chuyên Ngành")
-    nganh = st.selectbox("Chọn chuyên ngành:", ["IT", "Y học", "Kinh tế"])
+    
+    # 1. Mở rộng danh sách chuyên ngành
+    ds_nganh = ["IT", "Y học", "Kinh tế", "Logistics", "Marketing", "Du lịch", "Luật", "Xây dựng", "Giáo dục", "Tài chính"]
+    nganh = st.selectbox("Chọn chuyên ngành:", ds_nganh)
+    
+    # 2. Thêm lựa chọn loại bài học
+    loai_bai = st.radio("Chọn dạng bài tập:", ["Điền khuyết", "Nối từ"])
+    
     if st.button("Tạo bài học"):
-        st.info(f"Đang tạo nội dung cho ngành {nganh}...")
-        # Ở đây bạn có thể gọi hàm Groq tương tự như tab 1
+        if not api_key:
+            st.warning("Vui lòng nhập Groq API Key ở menu bên trái.")
+        else:
+            st.info(f"Đang tạo bài học dạng **{loai_bai}** cho ngành **{nganh}** bằng AI...")
+            
+            # Gọi AI để tạo nội dung bài học
+            client = Groq(api_key=api_key)
+            prompt = f"Hãy tạo một bài tập {loai_bai} tiếng Anh chuyên ngành {nganh}. Chỉ đưa ra nội dung bài tập, không giải thích."
+            
+            try:
+                response = client.chat.completions.create(
+                    model="llama-3.1-8b-instant",
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                noi_dung = response.choices[0].message.content
+                st.write("### Nội dung bài tập:")
+                st.markdown(noi_dung)
+                
+                # Ô nhập liệu cho người dùng trả lời
+                tra_loi = st.text_area("Nhập câu trả lời của bạn:")
+                if st.button("Kiểm tra đáp án"):
+                    st.write("Đang kiểm tra với AI...")
+                    # Ở đây bạn có thể gọi thêm một prompt check đáp án
+            except Exception as e:
+                st.error(f"Có lỗi xảy ra: {e}")
