@@ -31,6 +31,7 @@ import streamlit as st
 
 with tab2:
     st.subheader("Luyện Viết")
+    st.write("Dịch câu: **Tôi mang sách trong ba lô.**")
     
     # Câu mẫu
     cau_en = "I carry books in my backpack"
@@ -40,23 +41,36 @@ with tab2:
     if 'revealed' not in st.session_state:
         st.session_state.revealed = [False] * len(words)
 
-    st.write("Dịch câu: **Tôi mang sách trong ba lô.**")
-    
-    # Hiển thị các ô từ
-    cols = st.columns(len(words))
-    for i, word in enumerate(words):
-        if st.session_state.revealed[i]:
-            cols[i].button(word, key=f"btn_{i}", disabled=True)
-        else:
-            # Tạo hiệu ứng ẩn chữ (ví dụ: 'ca***')
-            masked_word = word[0:2] + "*" * (len(word) - 2) if len(word) > 2 else "*" * len(word)
-            if cols[i].button(masked_word, key=f"btn_{i}"):
-                st.session_state.revealed[i] = True
-                st.rerun()
+    # Tạo một khung chứa các từ (giao diện đẹp hơn)
+    container = st.container(border=True)
+    with container:
+        # Sử dụng số cột bằng với số từ
+        cols = st.columns(len(words))
+        
+        for i, word in enumerate(words):
+            # Logic hiển thị chữ: Nếu đã mở thì hiện chữ, chưa mở thì hiện 'ca***'
+            if st.session_state.revealed[i]:
+                cols[i].button(word, key=f"btn_{i}", disabled=True)
+            else:
+                # Tạo hiệu ứng ẩn chữ (giữ chữ cái đầu, thay còn lại bằng *)
+                masked_word = word[0:1] + "*" * (len(word) - 1) if len(word) > 1 else "*"
+                if cols[i].button(masked_word, key=f"btn_{i}"):
+                    st.session_state.revealed[i] = True
+                    st.rerun()
 
+    # Nút "Hiện tất cả"
     if st.button("Hiện tất cả"):
         st.session_state.revealed = [True] * len(words)
         st.rerun()
+        
+    # Thêm ô nhập câu hoàn chỉnh
+    st.write("---")
+    user_input = st.text_input("Nhập câu hoàn chỉnh vào đây:")
+    if st.button("Kiểm tra"):
+        if user_input.strip().lower() == cau_en.lower():
+            st.success("Chính xác! Bạn rất giỏi! 🎉")
+        else:
+            st.error(f"Chưa đúng. Đáp án đúng là: {cau_en}")
 with tab3:
     st.subheader("Từ Vựng Chuyên Ngành")
     nganh = st.selectbox("Chọn chuyên ngành:", ["IT", "Y học", "Kinh tế"])
