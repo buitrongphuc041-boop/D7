@@ -29,14 +29,29 @@ with tab1:
 
 with tab2:
     st.subheader("Luyện Viết")
-    cau_mau = {"vi": "Tôi rất mong được hợp tác với công ty của bạn.", "en": "I look forward to cooperating with your company."}
-    st.write(f"Dịch câu: **{cau_mau['vi']}**")
-    user_trans = st.text_input("Nhập bản dịch:")
+    
+    # Dữ liệu bài tập
+    cau_goc = {
+        "vi": "Tôi rất mong được hợp tác với công ty của bạn.",
+        "en": "I look forward to cooperating with your company.",
+        "goi_y": ["look forward to", "cooperating", "company"]
+    }
+    
+    st.write(f"Dịch câu: **{cau_goc['vi']}**")
+    
+    # Hiển thị gợi ý từ vựng
+    st.markdown("💡 **Gợi ý từ vựng:**")
+    cols = st.columns(len(cau_goc['goi_y']))
+    for i, word in enumerate(cau_goc['goi_y']):
+        cols[i].code(word)
+        
+    user_trans = st.text_input("Nhập bản dịch của bạn:")
+    
     if st.button("Kiểm tra"):
-        if user_trans.lower().strip() == cau_mau['en'].lower().strip():
+        if user_trans.lower().strip() == cau_goc['en'].lower().strip():
             st.success("Chính xác! 🎉")
         else:
-            st.error("Chưa khớp, thử lại nhé!")
+            st.error(f"Chưa chính xác. Đáp án đúng là: {cau_goc['en']}")
 
 with tab3:
     st.subheader("Từ Vựng Chuyên Ngành")
