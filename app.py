@@ -101,11 +101,18 @@ with tab3:
             st.session_state.vocab_list.append({"tu": tu_moi, "nghia": nghia_moi})
             st.rerun()
 
-    # 2. Hiển thị danh sách từ hiện có
+   # 2. Hiển thị danh sách từ hiện có
     if st.session_state.vocab_list:
         st.write("### Danh sách từ vựng của bạn:")
         for idx, item in enumerate(st.session_state.vocab_list):
-            st.write(f"{idx+1}. **{item['tu']}**: {item['nghia']}")
+            # Kiểm tra xem item có phải là dictionary không
+            if isinstance(item, dict):
+                tu = item.get('tu', 'N/A')
+                nghia = item.get('nghia', 'N/A')
+                st.write(f"{idx+1}. **{tu}**: {nghia}")
+            else:
+                # Nếu item là chuỗi hoặc dạng khác, hiển thị trực tiếp
+                st.write(f"{idx+1}. {item}")
             
         # 3. Tạo bài tập từ danh sách này
         loai_bai = st.radio("Chọn dạng bài tập:", ["Điền khuyết", "Nối từ"])
