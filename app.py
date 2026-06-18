@@ -79,53 +79,50 @@ with tab2:
 with tab3:
     st.subheader("Từ Vựng Chuyên Ngành")
     
-    # Danh sách chuyên ngành
     ds_nganh = ["IT", "Y học", "Kinh tế", "Logistics", "Marketing", "Du lịch", "Luật", "Xây dựng", "Giáo dục", "Tài chính"]
     nganh = st.selectbox("Chọn chuyên ngành:", ds_nganh)
     
-    # Khởi tạo session state
-    if 'vocab_list' not in st.session_state:
-        st.session_state.vocab_list = [] # Lưu danh sách các từ (dạng dict)
-    
-    # 1. Tạo từ vựng ban đầu hoặc Thêm từ mới
+    # Khởi tạo hoặc làm sạch danh sách từ vựng
+    if 'vocab_list' not in st.session_state or not isinstance(st.session_state.vocab_list, list):
+        st.session_state.vocab_list = []
+
+    # 1. Khu vực tạo từ hoặc thêm từ
     col1, col2 = st.columns(2)
+    
+    # Nút tạo 5 từ bằng AI
     if col1.button("Tạo 5 từ vựng mới"):
-        # Logic gọi AI tạo 5 từ và lưu vào st.session_state.vocab_list
-        # ... (Sử dụng Groq API như các phần trước)
+        # Lưu ý: Bạn cần cấu hình Groq client ở đây
+        # Ví dụ giả định: st.session_state.vocab_list = [{"tu": "Ship", "nghia": "Tàu"}, ...]
+        st.session_state.vocab_list = [{"tu": "Example", "nghia": "Ví dụ"}] # Thay bằng kết quả từ AI
         st.rerun()
         
+    # Nút thêm từ thủ công
     with col2.expander("Thêm từ thủ công"):
-        tu_moi = st.text_input("Từ tiếng Anh:")
-        nghia_moi = st.text_input("Nghĩa tiếng Việt:")
+        tu_input = st.text_input("Từ tiếng Anh:")
+        nghia_input = st.text_input("Nghĩa tiếng Việt:")
         if st.button("Thêm vào danh sách"):
-            st.session_state.vocab_list.append({"tu": tu_moi, "nghia": nghia_moi})
-            st.rerun()
+            if tu_input and nghia_input:
+                st.session_state.vocab_list.append({"tu": tu_input, "nghia": nghia_input})
+                st.rerun()
+            else:
+                st.warning("Vui lòng nhập đầy đủ từ và nghĩa!")
 
-   # 2. Hiển thị danh sách từ hiện có
+    # 2. Hiển thị danh sách từ vựng an toàn
     if st.session_state.vocab_list:
         st.write("### Danh sách từ vựng của bạn:")
         for idx, item in enumerate(st.session_state.vocab_list):
-            # Kiểm tra xem item có phải là dictionary không
+            # Kiểm tra định dạng dictionary để tránh TypeError
             if isinstance(item, dict):
-                tu = item.get('tu', 'N/A')
-                nghia = item.get('nghia', 'N/A')
-                st.write(f"{idx+1}. **{tu}**: {nghia}")
+                st.write(f"{idx+1}. **{item.get('tu', 'N/A')}**: {item.get('nghia', 'N/A')}")
             else:
-                # Nếu item là chuỗi hoặc dạng khác, hiển thị trực tiếp
-                st.write(f"{idx+1}. {item}")
-            
-        # 3. Tạo bài tập từ danh sách này
-        loai_bai = st.radio("Chọn dạng bài tập:", ["Điền khuyết", "Nối từ"])
-        if st.button("Tạo bài tập từ danh sách"):
-            # Prompt AI tạo bài tập dựa trên st.session_state.vocab_list
-            st.session_state.bai_tap = "Bài tập do AI tạo ra..." 
-            st.rerun()
+                st.write(f"{idx+1}. {item}") # Trường hợp cũ
+    else:
+        st.info("Danh sách từ vựng đang trống. Hãy tạo mới hoặc thêm từ thủ công.")
 
-    # 4. Hiển thị bài tập với nút Dịch
-    if 'bai_tap' in st.session_state:
-        st.write("---")
-        # Giả sử bài tập là một danh sách câu
-        for i, cau in enumerate(["Sentence 1...", "Sentence 2..."]):
-            st.write(f"Câu {i+1}: {cau}")
-            if st.button(f"Dịch câu {i+1}", key=f"trans_{i}"):
-                st.info("Bản dịch tiếng Việt của câu này là...")
+    # 3. Tạo bài tập (Dựa trên vocab_list đã chuẩn)
+    if st.session_state.vocab_list:
+        loai_bai = st.radio("Chọn dạng bài tập:", ["Điền khuyết", "Nối từ"])
+        if st.button("Tạo bài tập từ danh sách trên"):
+            # Gọi AI tạo bài tập với prompt truyền vào danh sách từ vựng
+            st.success("Đang tạo bài tập...")
+            # Logic tạo bài tập của bạn ở đây...
