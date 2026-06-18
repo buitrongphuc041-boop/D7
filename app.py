@@ -78,59 +78,33 @@ with tab2:
             st.error("Chưa đúng, thử lại nhé!")
 with tab3:
     st.subheader("📚 Từ Vựng Chuyên Ngành")
-    
     ds_nganh = ["IT", "Y học", "Kinh tế", "Logistics", "Marketing", "Du lịch", "Luật", "Xây dựng"]
     nganh = st.selectbox("Chọn chuyên ngành:", ds_nganh)
     
     if 'vocab_list' not in st.session_state or not isinstance(st.session_state.vocab_list, list):
         st.session_state.vocab_list = []
 
-    # 1. Tạo từ vựng
+    # SỬA LỖI: Dùng {{ và }} để tránh ValueError trong f-string
     if st.button("Tạo 5 từ vựng mới"):
         client = Groq(api_key=api_key)
-        prompt = f"Tạo 5 từ vựng tiếng Anh chuyên ngành {nganh} kèm nghĩa tiếng Việt. Trả về đúng định dạng JSON: [{'tu': 'A', 'nghia': 'B'}, {'tu': 'C', 'nghia': 'D'}]"
+        prompt = f"Tạo 5 từ vựng chuyên ngành {nganh} kèm nghĩa. Chỉ trả về chuỗi JSON định dạng: [{{'tu': 'word', 'nghia': 'meaning'}}, ...]"
+        
         try:
-            response = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "user", "content": prompt}])
-            import json, re
-            raw = response.choices[0].message.content
-            match = re.search(r'\[.*\]', raw, re.DOTALL)
-            if match:
-                st.session_state.vocab_list = json.loads(match.group())
-                st.rerun()
-            else:
-                st.error("AI không trả về định dạng chuẩn, vui lòng bấm lại.")
+            with st.spinner("AI đang tạo từ..."):
+                response = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "user", "content": prompt}])
+                import json, re
+                content = response.choices[0].message.content
+                # Tìm chuỗi JSON
+                match = re.search(r'\[.*\]', content, re.DOTALL)
+                if match:
+                    st.session_state.vocab_list = json.loads(match.group())
+                    st.rerun()
+                else:
+                    st.error("AI trả về sai định dạng, hãy thử lại.")
         except Exception as e:
             st.error(f"Lỗi: {e}")
 
-    # 2. Thêm từ thủ công
-    with st.expander("➕ Thêm từ thủ công"):
-        t = st.text_input("Từ tiếng Anh:")
-        n = st.text_input("Nghĩa:")
-        if st.button("Lưu từ"):
-            st.session_state.vocab_list.append({"tu": t, "nghia": n})
-            st.rerun()
-
-    # 3. Hiển thị danh sách
+    # Hiển thị danh sách từ vựng an toàn
     for idx, item in enumerate(st.session_state.vocab_list):
-        st.write(f"{idx+1}. **{item.get('tu', 'N/A')}**: {item.get('nghia', 'N/A')}")
-
-    # 4. Tạo bài tập
-    if st.session_state.vocab_list:
-        loai_bai = st.radio("Chọn dạng bài tập:", ["Điền khuyết", "Nối từ"])
-        if st.button("Tạo bài tập"):
-            client = Groq(api_key=api_key)
-            p = f"Dựa trên các từ: {st.session_state.vocab_list}. Tạo 3 câu bài tập {loai_bai}. Chỉ đưa ra câu tiếng Anh, không giải thích."
-            res = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "user", "content": p}])
-            st.session_state.bai_tap = res.choices[0].message.content.split('\n')
-            st.rerun()
-
-    # 5. Làm bài tập và Dịch
-    if 'bai_tap' in st.session_state:
-        st.write("### 📝 Bài tập:")
-        for i, cau in enumerate(st.session_state.bai_tap):
-            if cau.strip():
-                st.write(f"Câu {i+1}: {cau}")
-                if st.button(f"Dịch câu {i+1}", key=f"btn_dich_{i}"):
-                    client = Groq(api_key=api_key)
-                    r = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "user", "content": f"Dịch câu này: {cau}"}])
-                    st.info(r.choices[0].message.content)
+        if isinstance(item, dict):
+            st.write(f"{idx+1}. **{item.get('tu', 'N/A')}**: {item.get('nghia', 'N/A')}")
