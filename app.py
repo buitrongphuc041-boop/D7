@@ -32,18 +32,17 @@ import streamlit as st
 with tab2:
     st.subheader("Luyện Viết")
 
-    # Danh sách câu hỏi
+    # 1. Danh sách câu hỏi
     danh_sach_cau = [
-        {"vi": "Tôi mang sách trong ba lô.", "en": "I carry books in my backpack", "exp": "Cấu trúc: S + V + O. 'Carry' là động từ chính, 'in' là giới từ chỉ nơi chốn."},
-        {"vi": "Trời đang mưa rất to.", "en": "It is raining very hard", "exp": "Cấu trúc: Thì Hiện tại tiếp diễn (S + am/is/are + V-ing) dùng để diễn tả sự việc đang xảy ra."},
-        {"vi": "Tôi thích học lập trình.", "en": "I like to learn programming", "exp": "Cấu trúc: 'Like + to Verb/V-ing'. 'Learn' là động từ nguyên mẫu có 'to' sau 'like'."}
+        {"vi": "Tôi mang sách trong ba lô.", "en": "I carry books in my backpack"},
+        {"vi": "Trời đang mưa rất to.", "en": "It is raining very hard"},
+        {"vi": "Tôi thích học lập trình.", "en": "I like to learn programming"}
     ]
 
-    # Khởi tạo trạng thái (ĐÃ SỬA LỖI Ở ĐÂY)
+    # 2. Khởi tạo trạng thái cho câu hiện tại
     if 'current_idx' not in st.session_state:
         st.session_state.current_idx = 0
         st.session_state.revealed = [False] * len(danh_sach_cau[0]["en"].split())
-        st.session_state.show_explanation = False 
 
     # Lấy câu hiện tại
     cau_hien_tai = danh_sach_cau[st.session_state.current_idx]
@@ -51,7 +50,7 @@ with tab2:
 
     st.write(f"Dịch câu: **{cau_hien_tai['vi']}**")
 
-    # Khu vực hiển thị gợi ý
+    # 3. Khu vực hiển thị gợi ý (Bấm vào mới hiện)
     container = st.container(border=True)
     with container:
         cols = st.columns(len(words))
@@ -59,30 +58,24 @@ with tab2:
             if st.session_state.revealed[i]:
                 cols[i].button(word, key=f"btn_{i}", disabled=True)
             else:
+                # Ẩn bằng dấu *
                 masked = word[0] + "*" * (len(word) - 1) if len(word) > 1 else "*"
                 if cols[i].button(masked, key=f"btn_{i}"):
                     st.session_state.revealed[i] = True
                     st.rerun()
 
-    # Kiểm tra
+    # 4. Kiểm tra và chuyển câu
     user_input = st.text_input("Nhập câu hoàn chỉnh:", key="user_input")
     if st.button("Kiểm tra"):
         if user_input.strip().lower() == cau_hien_tai["en"].lower():
-            st.success("Chính xác!")
-            st.session_state.show_explanation = True
-            st.rerun()
+            st.success("Chính xác! Đang tải câu mới...")
+            
+            # Reset trạng thái cho câu tiếp theo
+            st.session_state.current_idx = (st.session_state.current_idx + 1) % len(danh_sach_cau)
+            st.session_state.revealed = [False] * len(danh_sach_cau[st.session_state.current_idx]["en"].split())
+            st.rerun() # Tải lại để hiển thị câu mới
         else:
             st.error("Chưa đúng, thử lại nhé!")
-
-    # Hiển thị giải thích
-    if st.session_state.show_explanation:
-        with st.expander("🔍 Xem giải thích chi tiết", expanded=True):
-            st.write(f"**Cấu trúc câu:** {cau_hien_tai['exp']}")
-            if st.button("Tiếp tục câu tiếp theo"):
-                st.session_state.show_explanation = False
-                st.session_state.current_idx = (st.session_state.current_idx + 1) % len(danh_sach_cau)
-                st.session_state.revealed = [False] * len(danh_sach_cau[st.session_state.current_idx]["en"].split())
-                st.rerun()
 with tab3:
     st.subheader("Từ Vựng Chuyên Ngành")
     nganh = st.selectbox("Chọn chuyên ngành:", ["IT", "Y học", "Kinh tế"])
