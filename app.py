@@ -85,16 +85,19 @@ with tab3:
     if 'vocab_list' not in st.session_state or not isinstance(st.session_state.vocab_list, list):
         st.session_state.vocab_list = []
 
-    # 1. Nút tạo 5 từ đầu tiên hoặc Thêm 5 từ mới vào danh sách cũ
-    col1, col2 = st.columns(2)
-    
-    if col1.button("Tạo/Thêm 5 từ mới"):
+    # 1. Nút tạo thêm từ (AI sẽ không lặp lại từ cũ)
+    if st.button("Tạo thêm 5 từ vựng mới"):
         client = Groq(api_key=api_key)
-        # Prompt yêu cầu AI tạo thêm từ mới
-        prompt = f"Tạo thêm 5 từ vựng chuyên ngành {nganh} kèm nghĩa tiếng Việt. Chỉ trả về JSON: [{{'tu': 'word', 'nghia': 'meaning'}}, ...]"
+        # Truyền danh sách cũ vào prompt để AI né ra
+        danh_sach_hien_tai = [item['tu'] for item in st.session_state.vocab_list]
+        prompt = f"""
+        Tạo 5 từ vựng chuyên ngành {nganh} kèm nghĩa tiếng Việt. 
+        QUAN TRỌNG: Không được trùng với các từ đã có: {danh_sach_hien_tai}.
+        Trả về đúng định dạng JSON: [{{'tu': 'word', 'nghia': 'meaning'}}, ...]
+        """
         
         try:
-            with st.spinner("AI đang tìm thêm từ cho bạn..."):
+            with st.spinner("Đang tìm từ mới..."):
                 response = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "user", "content": prompt}])
                 import json, re
                 content = response.choices[0].message.content
@@ -102,19 +105,18 @@ with tab3:
                 if match:
                     json_str = match.group().replace("'", '"')
                     them_tu = json.loads(json_str)
-                    # Cộng dồn từ mới vào danh sách cũ
-                    st.session_state.vocab_list.extend(them_tu)
+                    st.session_state.vocab_list.extend(them_tu) # Cộng dồn tiếp nối
                     st.rerun()
         except Exception as e:
-            st.error("Lỗi khi thêm từ, thử lại nhé!")
+            st.error("AI đang bận, thử lại nhé!")
 
-    # 2. Nút xóa danh sách nếu thấy quá nhiều
-    if col2.button("Xóa danh sách"):
+    # 2. Nút xóa toàn bộ (Reset)
+    if st.button("Xóa danh sách (Làm mới)"):
         st.session_state.vocab_list = []
         st.rerun()
 
-    # 3. Hiển thị danh sách từ vựng
+    # 3. Hiển thị danh sách từ vựng tích lũy
     if st.session_state.vocab_list:
         st.write(f"### Danh sách hiện có ({len(st.session_state.vocab_list)} từ):")
         for idx, item in enumerate(st.session_state.vocab_list):
-            st.write(f"{idx+1}. **{item.get('tu', 'N/A')}**: {item.get('nghia', 'N/A')}")
+            st.write(f"{idx+1}. **{item.get('tu')}**: {item.get('nghia')}")
