@@ -1,0 +1,6 @@
+streamlit
+groq
+Pillow
+gTTS
+python-docx
+PyPDF2
