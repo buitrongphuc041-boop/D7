@@ -78,51 +78,42 @@ with tab2:
             st.error("Chưa đúng, thử lại nhé!")
 with tab3:
     st.subheader("Từ Vựng Chuyên Ngành")
-    
-    ds_nganh = ["IT", "Y học", "Kinh tế", "Logistics", "Marketing", "Du lịch", "Luật", "Xây dựng", "Giáo dục", "Tài chính"]
+    ds_nganh = ["IT", "Y học", "Kinh tế", "Logistics", "Marketing", "Du lịch", "Luật", "Xây dựng"]
     nganh = st.selectbox("Chọn chuyên ngành:", ds_nganh)
     
-    # Khởi tạo hoặc làm sạch danh sách từ vựng
     if 'vocab_list' not in st.session_state or not isinstance(st.session_state.vocab_list, list):
         st.session_state.vocab_list = []
 
-    # 1. Khu vực tạo từ hoặc thêm từ
-    col1, col2 = st.columns(2)
-    
-    # Nút tạo 5 từ bằng AI
-    if col1.button("Tạo 5 từ vựng mới"):
-        # Lưu ý: Bạn cần cấu hình Groq client ở đây
-        # Ví dụ giả định: st.session_state.vocab_list = [{"tu": "Ship", "nghia": "Tàu"}, ...]
-        st.session_state.vocab_list = [{"tu": "Example", "nghia": "Ví dụ"}] # Thay bằng kết quả từ AI
-        st.rerun()
-        
-    # Nút thêm từ thủ công
-    with col2.expander("Thêm từ thủ công"):
-        tu_input = st.text_input("Từ tiếng Anh:")
-        nghia_input = st.text_input("Nghĩa tiếng Việt:")
-        if st.button("Thêm vào danh sách"):
-            if tu_input and nghia_input:
-                st.session_state.vocab_list.append({"tu": tu_input, "nghia": nghia_input})
-                st.rerun()
-            else:
-                st.warning("Vui lòng nhập đầy đủ từ và nghĩa!")
+    # Nút tạo từ chuyên ngành
+    if st.button("Tạo 5 từ vựng mới"):
+        if not api_key:
+            st.error("Vui lòng nhập Groq API Key ở menu bên trái!")
+        else:
+            with st.spinner("AI đang tạo từ vựng..."):
+                try:
+                    client = Groq(api_key=api_key)
+                    prompt = f"Hãy tạo 5 từ vựng tiếng Anh chuyên ngành {nganh} kèm nghĩa tiếng Việt. Trả về đúng định dạng JSON: [{'tu': 'từ', 'nghia': 'nghĩa'}, ...]"
+                    
+                    response = client.chat.completions.create(
+                        model="llama-3.1-8b-instant",
+                        messages=[{"role": "user", "content": prompt}]
+                    )
+                    
+                    # Chuyển đổi chuỗi trả về từ AI thành list dictionary
+                    import json
+                    content = response.choices[0].message.content
+                    # Làm sạch nội dung để lấy đúng phần JSON
+                    start = content.find("[")
+                    end = content.rfind("]") + 1
+                    data = json.loads(content[start:end])
+                    
+                    st.session_state.vocab_list = data
+                    st.success("Đã tạo thành công!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Lỗi khi tạo từ: {e}")
 
-    # 2. Hiển thị danh sách từ vựng an toàn
+    # Hiển thị danh sách từ
     if st.session_state.vocab_list:
-        st.write("### Danh sách từ vựng của bạn:")
         for idx, item in enumerate(st.session_state.vocab_list):
-            # Kiểm tra định dạng dictionary để tránh TypeError
-            if isinstance(item, dict):
-                st.write(f"{idx+1}. **{item.get('tu', 'N/A')}**: {item.get('nghia', 'N/A')}")
-            else:
-                st.write(f"{idx+1}. {item}") # Trường hợp cũ
-    else:
-        st.info("Danh sách từ vựng đang trống. Hãy tạo mới hoặc thêm từ thủ công.")
-
-    # 3. Tạo bài tập (Dựa trên vocab_list đã chuẩn)
-    if st.session_state.vocab_list:
-        loai_bai = st.radio("Chọn dạng bài tập:", ["Điền khuyết", "Nối từ"])
-        if st.button("Tạo bài tập từ danh sách trên"):
-            # Gọi AI tạo bài tập với prompt truyền vào danh sách từ vựng
-            st.success("Đang tạo bài tập...")
-            # Logic tạo bài tập của bạn ở đây...
+            st.write(f"{idx+1}. **{item.get('tu')}**: {item.get('nghia')}")
