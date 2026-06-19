@@ -73,7 +73,6 @@ with tab2:
             random.shuffle(st.session_state.shuffled_list)
             st.session_state.current_idx = 0
             
-        # Khởi tạo các trạng thái mới kiểm soát bộ đếm thời gian và AI giải thích
         if 'correct_answered' not in st.session_state:
             st.session_state.correct_answered = False
         if 'ai_explanation' not in st.session_state:
@@ -87,7 +86,6 @@ with tab2:
         cau_hien_tai = st.session_state.shuffled_list[st.session_state.current_idx]
         words = cau_hien_tai["en"].split()
 
-        # Đảm bảo số lượng ô gợi ý luôn khớp với độ dài từ của câu hiện tại
         if 'revealed' not in st.session_state or len(st.session_state.revealed) != len(words):
             st.session_state.revealed = [False] * len(words)
 
@@ -106,16 +104,16 @@ with tab2:
                         st.session_state.revealed[i] = True
                         st.rerun()
 
-        # 4. Kiểm tra câu trả lời
-        user_input = st.text_input("Nhập câu hoàn chỉnh:", key="user_input")
+        # 4. Kiểm tra câu trả lời (Áp dụng key động để tự động reset ô text khi sang câu mới)
+        input_key = f"user_input_{st.session_state.current_idx}"
+        user_input = st.text_input("Nhập câu hoàn chỉnh:", key=input_key)
         
         if st.button("Kiểm tra"):
             if user_input.strip().lower() == cau_hien_tai["en"].lower():
                 st.session_state.correct_answered = True
-                st.session_state.correct_time = time.time()  # Ghi lại mốc thời gian trả lời đúng
-                st.session_state.stop_countdown = False       # Reset trạng thái dừng đếm ngược
+                st.session_state.correct_time = time.time()  
+                st.session_state.stop_countdown = False       
                 
-                # Gọi AI giải thích cấu trúc ngữ pháp (Chỉ gọi duy nhất 1 lần tại đây để lưu vào session_state)
                 try:
                     with st.spinner("Chính xác! Đang kết nối AI phân tích ngữ pháp câu này..."):
                         client = Groq(api_key=api_key)
@@ -143,11 +141,9 @@ with tab2:
         if st.session_state.correct_answered:
             st.success("🎉 Bạn đã viết chính xác câu này!")
             
-            # Hiển thị phân tích cấu trúc ngữ pháp từ AI
             st.markdown("### 🧠 Phân Tích Cấu Trúc Ngữ Pháp")
             st.info(st.session_state.ai_explanation)
             
-            # Kiểm tra xem người dùng có nhấn nút Dừng lại hay chưa
             if not st.session_state.stop_countdown:
                 elapsed = time.time() - st.session_state.correct_time
                 remaining = int(10 - elapsed)
@@ -158,9 +154,9 @@ with tab2:
                         st.session_state.stop_countdown = True
                         st.rerun()
                     time.sleep(1)
-                    st.rerun()  # Ép giao diện vẽ lại mỗi 1 giây để cập nhật đồng hồ đếm ngược
+                    st.rerun()  
                 else:
-                    # Đã hết 10 giây và không bấm dừng -> Tự động chuyển câu mới
+                    # Chuyển câu tự động khi hết 10 giây
                     st.session_state.correct_answered = False
                     st.session_state.current_idx += 1
                     
@@ -169,8 +165,6 @@ with tab2:
                         st.session_state.current_idx = 0
                     
                     st.session_state.revealed = [False] * len(st.session_state.shuffled_list[st.session_state.current_idx]["en"].split())
-                    if "user_input" in st.session_state:
-                        st.session_state.user_input = ""  # Xóa sạch text trong ô nhập liệu cũ
                     st.rerun()
             else:
                 st.warning("⏸️ Đã dừng đếm ngược. Bạn có thể thong thả nghiên cứu cấu trúc câu.")
@@ -183,8 +177,6 @@ with tab2:
                         st.session_state.current_idx = 0
                         
                     st.session_state.revealed = [False] * len(st.session_state.shuffled_list[st.session_state.current_idx]["en"].split())
-                    if "user_input" in st.session_state:
-                        st.session_state.user_input = ""
                     st.rerun()
 with tab3:
         st.subheader("📚 Từ Vựng Chuyên Ngành")
