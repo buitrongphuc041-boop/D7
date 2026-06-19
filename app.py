@@ -1,7 +1,7 @@
 import streamlit as st
 import random
 from groq import Groq
-
+import time
 # Cấu hình giao diện Streamlit
 st.set_page_config(page_title="AI ENGLISH TUTOR", layout="wide")
 
