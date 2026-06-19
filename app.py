@@ -26,8 +26,7 @@ with tab1:
         if 'chat_counter' not in st.session_state:
             st.session_state.chat_counter = 1
 
-        # 2. Thanh điều khiển hàng ngang (Nằm ngay dưới Subheader)
-        # Chia thành 3 cột để gom cụm các nút bấm và lịch sử lại cạnh nhau
+        # 2. Thanh điều khiển hàng ngang
         col_new, col_hist, col_refresh = st.columns([1.2, 2, 1])
 
         with col_new:
@@ -42,39 +41,32 @@ with tab1:
                 st.rerun()
 
         with col_hist:
-            # Tạo danh sách các key phòng chat để làm tùy chọn cho Selectbox
             chat_options = list(st.session_state.all_chats.keys())
-            # Tìm vị trí hiện tại để giữ đúng phòng chat đang xem
             current_index = chat_options.index(st.session_state.current_chat_id)
             
-            # Ô chọn lịch sử hiển thị gọn gàng bằng dropdown list
             selected_chat_id = st.selectbox(
                 "Lịch sử trò chuyện",
                 options=chat_options,
                 index=current_index,
                 format_func=lambda x: st.session_state.all_chats[x]["title"],
-                label_visibility="collapsed"  # Ẩn nhãn để thẳng hàng với nút bấm
+                label_visibility="collapsed"
             )
-            
-            # Nếu người dùng chọn một cuộc trò chuyện khác trên danh sách
             if selected_chat_id != st.session_state.current_chat_id:
                 st.session_state.current_chat_id = selected_chat_id
                 st.rerun()
 
         with col_refresh:
             if st.button("🔄 Làm mới", use_container_width=True):
-                # Chỉ xóa lịch sử của cuộc trò chuyện hiện tại chứ không ảnh hưởng phòng khác
                 st.session_state.all_chats[st.session_state.current_chat_id]["history"] = []
                 st.session_state.all_chats[st.session_state.current_chat_id]["title"] = f"Trò chuyện trống"
                 st.rerun()
 
         st.write("---")
 
-        # Lấy dữ liệu lịch sử của riêng cuộc trò chuyện đang được chọn
         active_id = st.session_state.current_chat_id
         active_chat = st.session_state.all_chats[active_id]
 
-        # 3. Hiển thị nội dung tin nhắn cũ của phòng hiện tại
+        # 3. Hiển thị nội dung tin nhắn cũ
         chat_placeholder = st.container()
         with chat_placeholder:
             if not active_chat["history"]:
@@ -94,14 +86,28 @@ with tab1:
                     try:
                         client = Groq(api_key=api_key)
                         
-                        # Tự động lấy câu hỏi đầu tiên làm tiêu đề hiển thị trong lịch sử cho dễ nhớ
                         if not active_chat["history"]:
                             text_clean = prompt.strip()
                             truncated_title = text_clean[:25] + "..." if len(text_clean) > 25 else text_clean
                             active_chat["title"] = truncated_title
                         
-                        # Chuẩn bị dữ liệu ngữ cảnh gửi lên AI
-                        messages_to_send = active_chat["history"].copy()
+                        # 🔥 ĐÂY LÀ KHU VỰC "BƠM NÃO" CHO AI: Định hình vai trò bằng System Message
+                        system_message = {
+                            "role": "system",
+                            "content": (
+                                "Bạn là một Trợ lý kiêm Gia sư Tiếng Anh (AI English Tutor) cực kỳ thông minh. "
+                                "Nhiệm vụ của bạn là giúp người dùng học tập và giao tiếp tiếng Anh hiệu quả.\n"
+                                "⚠️ QUAN TRỌNG CỐT LÕI: Hãy đọc thật kỹ yêu cầu hành động trong câu hỏi của người dùng. "
+                                "Nếu họ yêu cầu 'viết bài văn bằng tiếng Anh', 'đặt câu bằng tiếng Anh', 'viết đoạn hội thoại bằng tiếng Anh'... "
+                                "thì bạn PHẢI VIẾT PHẦN NỘI DUNG ĐÓ HOÀN TOÀN BẰNG TIẾNG ANH.\n"
+                                "Sau khi hoàn thành nội dung tiếng Anh theo yêu cầu, bạn có thể bổ sung phần dịch nghĩa, giải thích cấu trúc "
+                                "ngữ pháp hoặc từ vựng quan trọng bằng tiếng Việt ở phía dưới để người dùng học tập. Tuyệt đối không được "
+                                "dịch toàn bộ bài văn/đoạn văn tiếng Anh thành tiếng Việt ngay từ đầu."
+                            )
+                        }
+                        
+                        # Gộp System Message vào đầu mảng để AI luôn ghi nhớ luật
+                        messages_to_send = [system_message] + active_chat["history"].copy()
                         messages_to_send.append({"role": "user", "content": prompt})
                         
                         with st.spinner("Trợ lý đang suy nghĩ..."):
@@ -111,7 +117,6 @@ with tab1:
                             )
                             reply = response.choices[0].message.content
                         
-                        # Lưu dữ liệu vào đúng phòng chat đang hoạt động
                         active_chat["history"].append({"role": "user", "content": prompt})
                         active_chat["history"].append({"role": "assistant", "content": reply})
                         st.rerun()
@@ -122,7 +127,6 @@ with tab1:
                     st.warning("Vui lòng nhập API Key ở menu bên trái.")
             else:
                 st.warning("Vui lòng điền nội dung câu hỏi trước khi gửi.")
-
 with tab2:
         st.subheader("Luyện Viết")
 
