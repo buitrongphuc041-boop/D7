@@ -275,64 +275,18 @@ with tab2:
                         
                     st.session_state.revealed = [False] * len(st.session_state.shuffled_list[st.session_state.current_idx]["en"].split())
                     st.rerun()
-with tab3:
-        st.subheader("📚 Từ Vựng Chuyên Ngành")
-        
-        ds_nganh = ["IT", "Y học", "Kinh tế", "Logistics", "Marketing", "Du lịch", "Luật", "Xây dựng"]
-        nganh = st.selectbox("Chọn chuyên ngành:", ds_nganh)
-        
-        if 'vocab_list' not in st.session_state or not isinstance(st.session_state.vocab_list, list):
+if st.button("Xóa danh sách (Làm mới)"):
             st.session_state.vocab_list = []
+            st.rerun()
 
-        # 1. Nút tạo thêm từ (AI sẽ không lặp lại từ cũ)
-        if st.button("Tạo thêm 5 từ vựng mới"):
-            if api_key:
-                try:
-                    client = Groq(api_key=api_key)
-                    danh_sach_hien_tai = [item['tu'] for item in st.session_state.vocab_list if 'tu' in item]
-                    
-                    # Thiết kế prompt chặt chẽ, yêu cầu trả về định dạng rõ ràng
-                    prompt = f"""
-                    Tạo 5 từ vựng tiếng Anh chuyên ngành {nganh} kèm thông tin chi tiết. 
-                    QUAN TRỌNG: Không trùng với các từ đã có trong danh sách này: {danh_sach_hien_tai}.
-                    
-                    Bạn bắt buộc phải trả về một JSON Object hợp lệ có cấu trúc chính xác như sau:
-                    {{
-                      "vocab": [
-                        {{
-                          "tu": "Từ vựng tiếng Anh",
-                          "phien_am": "Phiên âm IPA chuẩn",
-                          "nghia": "Nghĩa tiếng Việt",
-                          "cach_dung": "Giải thích chi tiết ngữ cảnh sử dụng bằng tiếng Việt (không dùng dấu nháy kép bên trong chuỗi)",
-                          "vi_du": "Câu ví dụ tiếng Anh (sử dụng dấu nháy đơn nếu cần, tuyệt đối không dùng nháy kép)",
-                          "dich_vi_du": "Bản dịch tiếng Việt của câu ví dụ (tuyệt đối không dùng nháy kép)"
-                        }}
-                      ]
-                    }}
-                    """
-                    
-                    with st.spinner("Đang tìm từ mới và biên soạn nội dung..."):
-                        # Không sử dụng response_format={"type": "json_object"} để tránh bị Groq chặn lỗi 400
-                        response = client.chat.completions.create(
-                            model="llama-3.1-8b-instant", 
-                            messages=[
-                                {
-                                    "role": "system", 
-                                    "content": "You are a helpful assistant. Output a valid raw JSON object matching the requested schema. Do not output any conversational text or markdown code blocks, just raw JSON text."
-                                },
-                                {"role": "user", "content": prompt}
-                            ],
-                            temperature=0.3, # Hạ nhiệt độ để AI bớt "sáng tạo" lung tung làm hỏng JSON
-                            max_tokens=2000
-                        )
-                        
-                        import json
-                        import re
-                        
-                        raw_content = response.choices[0].message.content.strip()
-                        
-                        # --- BỘ LỌC VÀ DỌN RÁC JSON THỦ CÔNG (SIÊU BỀN BỈ) ---
-                        # Bước 1: Loại bỏ các thẻ định dạng code block ```json ... ``` nếu AI tự động bọc vào
-                        cleaned_content = raw_content
-                        if cleaned_content.startswith("```"):
-                            cleaned_content = re.sub(r'^
+        # 3. Hiển thị danh sách từ vựng tích lũy
+        if st.session_state.vocab_list:
+            st.write(f"### Danh sách hiện có ({len(st.session_state.vocab_list)} từ):")
+            
+            for idx, item in enumerate(st.session_state.vocab_list):
+                tieu_de = f"🔹 {idx+1}. {item.get('tu')} *{item.get('phien_am')}* — **{item.get('nghia')}**"
+                
+                with st.expander(tieu_de):
+                    st.markdown(f"💡 **Cách dùng:** {item.get('cach_dung')}")
+                    st.markdown(f"📝 **Ví dụ:** *{item.get('vi_du')}*")
+                    st.markdown(f"🔻 **Dịch nghĩa:** {item.get('dich_vi_du')}")
