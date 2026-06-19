@@ -275,6 +275,66 @@ with tab2:
                         
                     st.session_state.revealed = [False] * len(st.session_state.shuffled_list[st.session_state.current_idx]["en"].split())
                     st.rerun()
+ with tab3:
+        st.subheader("📚 Từ Vựng Chuyên Ngành")
+        
+        ds_nganh = ["IT", "Y học", "Kinh tế", "Logistics", "Marketing", "Du lịch", "Luật", "Xây dựng"]
+        nganh = st.selectbox("Chọn chuyên ngành:", ds_nganh)
+        
+        if 'vocab_list' not in st.session_state or not isinstance(st.session_state.vocab_list, list):
+            st.session_state.vocab_list = []
+
+        # 1. Nút tạo thêm từ (AI sẽ không lặp lại từ cũ)
+        if st.button("Tạo thêm 5 từ vựng mới"):
+            client = Groq(api_key=api_key)
+            danh_sach_hien_tai = [item['tu'] for item in st.session_state.vocab_list]
+            
+            # Đổi cấu trúc prompt sang dạng JSON Object chứa key "vocab" để bật JSON Mode của Groq
+            prompt = f"""
+            Tạo 5 từ vựng tiếng Anh chuyên ngành {nganh} kèm thông tin chi tiết. 
+            QUAN TRỌNG: Không trùng với các từ đã có: {danh_sach_hien_tai}.
+            
+            Bạn PHẢI trả về một JSON Object hợp lệ cấu trúc chính xác như sau:
+            {{
+              "vocab": [
+                {{
+                  "tu": "Từ vựng tiếng Anh",
+                  "phien_am": "Phiên âm IPA (ví dụ: /kəmˈpjuː.tər/)",
+                  "nghia": "Nghĩa tiếng Việt",
+                  "cach_dung": "Giải thích ngắn gọn ngữ cảnh sử dụng",
+                  "vi_du": "Câu ví dụ tiếng Anh",
+                  "dich_vi_du": "Dịch câu ví dụ sang tiếng Việt"
+                }}
+              ]
+            }}
+            """
+            
+            try:
+                with st.spinner("Đang tìm từ mới và biên soạn nội dung..."):
+                    # Thêm cấu hình response_format để ép Groq trả về JSON chuẩn chỉnh
+                    response = client.chat.completions.create(
+                        model="llama-3.1-8b-instant", 
+                        messages=[{"role": "user", "content": prompt}],
+                        response_format={"type": "json_object"},
+                        temperature=0.7
+                    )
+                    import json
+                    content = response.choices[0].message.content
+                    
+                    # Giải mã thẳng JSON không cần dùng Regex dò tìm như trước
+                    data = json.loads(content)
+                    them_tu = data.get("vocab", [])
+                    
+                    if them_tu:
+                        st.session_state.vocab_list.extend(them_tu) 
+                        st.rerun()
+                    else:
+                        st.warning("AI phản hồi trống, hãy thử bấm lại nhé!")
+            except Exception as e:
+                # Hiện chi tiết lỗi nếu có để dễ theo dõi khi code
+                st.error(f"Lỗi hệ thống hoặc API quá tải: {str(e)}")
+
+        # 2. Nút xóa toàn bộ (Reset)                       
 if st.button("Xóa danh sách (Làm mới)"):
             st.session_state.vocab_list = []
             st.rerun()
