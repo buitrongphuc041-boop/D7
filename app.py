@@ -286,85 +286,53 @@ with tab3:
 
         # 1. Nút tạo thêm từ (AI sẽ không lặp lại từ cũ)
         if st.button("Tạo thêm 5 từ vựng mới"):
-            # LỚP BẢO VỆ 1: Kiểm tra xem biến api_key đã được nhập ở giao diện chưa
-            if 'api_key' in locals() or 'api_key' in globals() or api_key:
+            if api_key:
                 try:
                     client = Groq(api_key=api_key)
                     danh_sach_hien_tai = [item['tu'] for item in st.session_state.vocab_list if 'tu' in item]
                     
+                    # Thiết kế prompt chặt chẽ, yêu cầu trả về định dạng rõ ràng
                     prompt = f"""
                     Tạo 5 từ vựng tiếng Anh chuyên ngành {nganh} kèm thông tin chi tiết. 
-                    QUAN TRỌNG: Không trùng với các từ đã có: {danh_sach_hien_tai}.
+                    QUAN TRỌNG: Không trùng với các từ đã có trong danh sách này: {danh_sach_hien_tai}.
                     
-                    Bạn PHẢI trả về một JSON Object hợp lệ cấu trúc chính xác như sau:
+                    Bạn bắt buộc phải trả về một JSON Object hợp lệ có cấu trúc chính xác như sau:
                     {{
                       "vocab": [
                         {{
                           "tu": "Từ vựng tiếng Anh",
-                          "phien_am": "Phiên âm IPA (ví dụ: /kəmˈpjuː.tər/)",
+                          "phien_am": "Phiên âm IPA chuẩn",
                           "nghia": "Nghĩa tiếng Việt",
-                          "cach_dung": "Giải thích ngắn gọn ngữ cảnh sử dụng",
-                          "vi_du": "Câu ví dụ tiếng Anh",
-                          "dich_vi_du": "Dịch câu ví dụ sang tiếng Việt"
+                          "cach_dung": "Giải thích chi tiết ngữ cảnh sử dụng bằng tiếng Việt (không dùng dấu nháy kép bên trong chuỗi)",
+                          "vi_du": "Câu ví dụ tiếng Anh (sử dụng dấu nháy đơn nếu cần, tuyệt đối không dùng nháy kép)",
+                          "dich_vi_du": "Bản dịch tiếng Việt của câu ví dụ (tuyệt đối không dùng nháy kép)"
                         }}
                       ]
                     }}
                     """
                     
                     with st.spinner("Đang tìm từ mới và biên soạn nội dung..."):
-                        # LỚP BẢO VỆ 2: Thêm vai trò 'system' răn đe AI không trả về ký tự markdown thừa
+                        # Không sử dụng response_format={"type": "json_object"} để tránh bị Groq chặn lỗi 400
                         response = client.chat.completions.create(
                             model="llama-3.1-8b-instant", 
                             messages=[
                                 {
                                     "role": "system", 
-                                    "content": "You are a strict data assistant. Output ONLY raw valid JSON matching the user's schema. Never wrap response in markdown blocks like ```json."
+                                    "content": "You are a helpful assistant. Output a valid raw JSON object matching the requested schema. Do not output any conversational text or markdown code blocks, just raw JSON text."
                                 },
                                 {"role": "user", "content": prompt}
                             ],
-                            response_format={"type": "json_object"},
-                            temperature=0.7
+                            temperature=0.3, # Hạ nhiệt độ để AI bớt "sáng tạo" lung tung làm hỏng JSON
+                            max_tokens=2000
                         )
+                        
                         import json
-                        content = response.choices[0].message.content.strip()
+                        import re
                         
-                        # LỚP BẢO VỆ 3: Bộ lọc dọn rác - Nếu AI cố tình bọc nháy ngược ```, code tự động bóc bỏ luôn
-                        if content.startswith("```"):
-                            content = content.replace("```json", "").replace("```", "").strip()
+                        raw_content = response.choices[0].message.content.strip()
                         
-                        # Tiến hành parse JSON an toàn
-                        data = json.loads(content)
-                        them_tu = data.get("vocab", [])
-                        
-                        if them_tu:
-                            st.session_state.vocab_list.extend(them_tu) 
-                            st.rerun()
-                        else:
-                            st.warning("AI phản hồi trống hoặc sai cấu trúc, hãy bấm thử lại nhé!")
-                            
-                except Exception as e:
-                    st.error(f"Lỗi hệ thống hoặc API quá tải: {str(e)}")
-            else:
-                st.warning("Vui lòng điền API Key ở menu bên trái trước khi tạo từ vựng.")
-
-        # 2. Nút xóa toàn bộ (Reset)
-        if st.button("Xóa danh sách (Làm mới)"):
-            st.session_state.vocab_list = []
-            st.rerun()
-
-        # 3. Hiển thị danh sách từ vựng tích lũy
-        if st.session_state.vocab_list:
-            st.write(f"### Danh sách hiện có ({len(st.session_state.vocab_list)} từ):")
-            
-            for idx, item in enumerate(st.session_state.vocab_list):
-                # Sử dụng .get() kèm giá trị mặc định để tránh lỗi crash giao diện nếu AI thiếu thuộc tính
-                tu_vung = item.get('tu', 'N/A')
-                phien_am = item.get('phien_am', '')
-                nghia = item.get('nghia', 'Chưa rõ nghĩa')
-                
-                tieu_de = f"🔹 {idx+1}. {tu_vung} *{phien_am}* — **{nghia}**"
-                
-                with st.expander(tieu_de):
-                    st.markdown(f"💡 **Cách dùng:** {item.get('cach_dung', 'Đang cập nhật...')}")
-                    st.markdown(f"📝 **Ví dụ:** *{item.get('vi_du', 'Đang cập nhật...')}*")
-                    st.markdown(f"🔻 **Dịch nghĩa:** {item.get('dich_vi_du', 'Đang cập nhật...')}")
+                        # --- BỘ LỌC VÀ DỌN RÁC JSON THỦ CÔNG (SIÊU BỀN BỈ) ---
+                        # Bước 1: Loại bỏ các thẻ định dạng code block ```json ... ``` nếu AI tự động bọc vào
+                        cleaned_content = raw_content
+                        if cleaned_content.startswith("```"):
+                            cleaned_content = re.sub(r'^
