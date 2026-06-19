@@ -14,21 +14,62 @@ api_key = st.sidebar.text_input("Groq API Key", type="password")
 tab1, tab2, tab3 = st.tabs(["💬 Chat", "✍️ Luyện Viết", "📚 Từ Vựng"])
 
 with tab1:
-    st.subheader("Trợ lý Giao Tiếp")
-    prompt = st.text_input("Nhập câu hỏi của bạn:")
-    if st.button("Gửi"):
-        if api_key:
-            client = Groq(api_key=api_key)
-            response = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=[{"role": "user", "content": prompt}]
-            )
-            st.write(response.choices[0].message.content)
-        else:
-            st.warning("Vui lòng nhập API Key ở menu bên trái.")
+        st.subheader("💬 Trợ lý Giao Tiếp")
 
-import streamlit as st
-import random
+        # Khởi tạo lịch sử trò chuyện nếu chưa có trong session_state
+        if 'chat_history' not in st.session_state:
+            st.session_state.chat_history = []
+
+        # Thanh điều khiển phụ: Nút tạo cuộc trò chuyện mới
+        col_space, col_btn = st.columns([4, 1])
+        with col_btn:
+            if st.button("🔄 Làm mới", use_container_width=True):
+                st.session_state.chat_history = []
+                st.rerun()
+
+        # 1. Hiển thị lại toàn bộ lịch sử các câu hỏi và câu trả lời cũ
+        # Tạo một khung cuộn (container) để chứa các tin nhắn cũ gọn gàng
+        chat_placeholder = st.container()
+        with chat_placeholder:
+            for message in st.session_state.chat_history:
+                with st.chat_message(message["role"]):
+                    st.write(message["content"])
+
+        # 2. Ô nhập câu hỏi mới (Áp dụng khóa động key để tự xóa chữ sau khi bấm Gửi)
+        chat_key = f"chat_prompt_{len(st.session_state.chat_history)}"
+        prompt = st.text_input("Nhập câu hỏi của bạn:", key=chat_key)
+        
+        if st.button("Gửi câu hỏi", key="btn_send_chat"):
+            if prompt.strip():
+                if api_key:
+                    try:
+                        client = Groq(api_key=api_key)
+                        
+                        # Chuẩn bị danh sách gửi đi: Bao gồm lịch sử tin nhắn cũ + câu hỏi mới
+                        # Việc này giúp AI hiểu bạn đang nói về chủ đề gì ở câu trước
+                        messages_to_send = st.session_state.chat_history.copy()
+                        messages_to_send.append({"role": "user", "content": prompt})
+                        
+                        with st.spinner("Trợ lý đang suy nghĩ..."):
+                            response = client.chat.completions.create(
+                                model="llama-3.1-8b-instant",
+                                messages=messages_to_send
+                            )
+                            reply = response.choices[0].message.content
+                        
+                        # Sau khi AI trả lời thành công, lưu cả Câu hỏi và Câu trả lời vào lịch sử
+                        st.session_state.chat_history.append({"role": "user", "content": prompt})
+                        st.session_state.chat_history.append({"role": "assistant", "content": reply})
+                        
+                        # Làm mới giao diện để hiển thị hội thoại mới lên màn hình
+                        st.rerun()
+                        
+                    except Exception as e:
+                        st.error(f"Lỗi kết nối AI: {str(e)}")
+                else:
+                    st.warning("Vui lòng nhập API Key ở menu bên trái.")
+            else:
+                st.warning("Vui lòng điền nội dung câu hỏi trước khi gửi.")
 
 with tab2:
         st.subheader("Luyện Viết")
