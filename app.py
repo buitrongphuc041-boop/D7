@@ -31,89 +31,161 @@ import streamlit as st
 import random
 
 with tab2:
-    st.subheader("Luyện Viết")
+        st.subheader("Luyện Viết")
 
-    # 1. Danh sách 30 câu hỏi
-    danh_sach_cau = [
-        {"vi": "Tôi mang sách trong ba lô.", "en": "I carry books in my backpack"},
-        {"vi": "Trời đang mưa rất to.", "en": "It is raining very hard"},
-        {"vi": "Tôi thích học lập trình.", "en": "I like to learn programming"},
-        {"vi": "Hôm nay thời tiết rất đẹp.", "en": "The weather is very nice today"},
-        {"vi": "Cô ấy đang nấu bữa tối.", "en": "She is cooking dinner"},
-        {"vi": "Họ đang chơi bóng đá.", "en": "They are playing soccer"},
-        {"vi": "Tôi cần uống nước.", "en": "I need to drink water"},
-        {"vi": "Anh ấy đang đọc một cuốn sách.", "en": "He is reading a book"},
-        {"vi": "Chúng tôi đi làm bằng xe buýt.", "en": "We go to work by bus"},
-        {"vi": "Con mèo đang ngủ trên ghế.", "en": "The cat is sleeping on the chair"},
-        {"vi": "Bạn có khỏe không?", "en": "How are you doing"},
-        {"vi": "Tôi yêu gia đình tôi.", "en": "I love my family"},
-        {"vi": "Học tiếng Anh rất thú vị.", "en": "Learning English is very interesting"},
-        {"vi": "Mặt trời mọc ở hướng Đông.", "en": "The sun rises in the East"},
-        {"vi": "Tôi muốn đi du lịch thế giới.", "en": "I want to travel the world"},
-        {"vi": "Hãy giúp tôi một tay.", "en": "Please give me a hand"},
-        {"vi": "Đừng quên làm bài tập về nhà.", "en": "Don't forget to do your homework"},
-        {"vi": "Tôi đang đợi bạn ở trạm xe.", "en": "I am waiting for you at the station"},
-        {"vi": "Ngày mai là sinh nhật tôi.", "en": "Tomorrow is my birthday"},
-        {"vi": "Cà phê này rất ngon.", "en": "This coffee is very delicious"},
-        {"vi": "Bạn nói tiếng Anh rất tốt.", "en": "You speak English very well"},
-        {"vi": "Tôi đi ngủ lúc 10 giờ.", "en": "I go to bed at 10 pm"},
-        {"vi": "Cô ấy là một giáo viên giỏi.", "en": "She is a good teacher"},
-        {"vi": "Chúng tôi đang thảo luận về dự án.", "en": "We are discussing the project"},
-        {"vi": "Hãy mở cửa sổ ra.", "en": "Please open the window"},
-        {"vi": "Tôi thích nghe nhạc cổ điển.", "en": "I like listening to classical music"},
-        {"vi": "Con chó đang sủa ở ngoài.", "en": "The dog is barking outside"},
-        {"vi": "Thời gian là vàng bạc.", "en": "Time is money"},
-        {"vi": "Tôi không biết câu trả lời.", "en": "I don't know the answer"},
-        {"vi": "Chúc bạn một ngày tốt lành.", "en": "Have a nice day"}
-    ]
+        # 1. Danh sách 30 câu hỏi
+        danh_sach_cau = [
+            {"vi": "Tôi mang sách trong ba lô.", "en": "I carry books in my backpack"},
+            {"vi": "Trời đang mưa rất to.", "en": "It is raining very hard"},
+            {"vi": "Tôi thích học lập trình.", "en": "I like to learn programming"},
+            {"vi": "Hôm nay thời tiết rất đẹp.", "en": "The weather is very nice today"},
+            {"vi": "Cô ấy đang nấu bữa tối.", "en": "She is cooking dinner"},
+            {"vi": "Họ đang chơi bóng đá.", "en": "They are playing soccer"},
+            {"vi": "Tôi cần uống nước.", "en": "I need to drink water"},
+            {"vi": "Anh ấy đang đọc một cuốn sách.", "en": "He is reading a book"},
+            {"vi": "Chúng tôi đi làm bằng xe buýt.", "en": "We go to work by bus"},
+            {"vi": "Con mèo đang ngủ trên ghế.", "en": "The cat is sleeping on the chair"},
+            {"vi": "Bạn có khỏe không?", "en": "How are you doing"},
+            {"vi": "Tôi yêu gia đình tôi.", "en": "I love my family"},
+            {"vi": "Học tiếng Anh rất thú vị.", "en": "Learning English is very interesting"},
+            {"vi": "Mặt trời mọc ở hướng Đông.", "en": "The sun rises in the East"},
+            {"vi": "Tôi muốn đi du lịch thế giới.", "en": "I want to travel the world"},
+            {"vi": "Hãy giúp tôi một tay.", "en": "Please give me a hand"},
+            {"vi": "Đừng quên làm bài tập về nhà.", "en": "Don't forget to do your homework"},
+            {"vi": "Tôi đang đợi bạn ở trạm xe.", "en": "I am waiting for you at the station"},
+            {"vi": "Ngày mai là sinh nhật tôi.", "en": "Tomorrow is my birthday"},
+            {"vi": "Cà phê này rất ngon.", "en": "This coffee is very delicious"},
+            {"vi": "Bạn nói tiếng Anh rất tốt.", "en": "You speak English very well"},
+            {"vi": "Tôi đi ngủ lúc 10 giờ.", "en": "I go to bed at 10 pm"},
+            {"vi": "Cô ấy là một giáo viên giỏi.", "en": "She is a good teacher"},
+            {"vi": "Chúng tôi đang thảo luận về dự án.", "en": "We are discussing the project"},
+            {"vi": "Hãy mở cửa sổ ra.", "en": "Please open the window"},
+            {"vi": "Tôi thích nghe nhạc cổ điển.", "en": "I like listening to classical music"},
+            {"vi": "Con chó đang sủa ở ngoài.", "en": "The dog is barking outside"},
+            {"vi": "Thời gian là vàng bạc.", "en": "Time is money"},
+            {"vi": "Tôi không biết câu trả lời.", "en": "I don't know the answer"},
+            {"vi": "Chúc bạn một ngày tốt lành.", "en": "Have a nice day"}
+        ]
 
-    # 2. Khởi tạo và Xáo trộn danh sách khi chạy lần đầu
-    if 'shuffled_list' not in st.session_state:
-        st.session_state.shuffled_list = danh_sach_cau.copy()
-        random.shuffle(st.session_state.shuffled_list)
-        st.session_state.current_idx = 0
+        # 2. Khởi tạo và Xáo trộn danh sách khi chạy lần đầu
+        if 'shuffled_list' not in st.session_state:
+            st.session_state.shuffled_list = danh_sach_cau.copy()
+            random.shuffle(st.session_state.shuffled_list)
+            st.session_state.current_idx = 0
+            
+        # Khởi tạo các trạng thái mới kiểm soát bộ đếm thời gian và AI giải thích
+        if 'correct_answered' not in st.session_state:
+            st.session_state.correct_answered = False
+        if 'ai_explanation' not in st.session_state:
+            st.session_state.ai_explanation = ""
+        if 'correct_time' not in st.session_state:
+            st.session_state.correct_time = None
+        if 'stop_countdown' not in st.session_state:
+            st.session_state.stop_countdown = False
+
+        # Lấy câu hiện tại từ danh sách đã xáo trộn
+        cau_hien_tai = st.session_state.shuffled_list[st.session_state.current_idx]
+        words = cau_hien_tai["en"].split()
+
+        # Đảm bảo số lượng ô gợi ý luôn khớp với độ dài từ của câu hiện tại
+        if 'revealed' not in st.session_state or len(st.session_state.revealed) != len(words):
+            st.session_state.revealed = [False] * len(words)
+
+        st.write(f"Dịch câu: **{cau_hien_tai['vi']}**")
+
+        # 3. Khu vực hiển thị gợi ý
+        container = st.container(border=True)
+        with container:
+            cols = st.columns(len(words))
+            for i, word in enumerate(words):
+                if i < len(st.session_state.revealed) and st.session_state.revealed[i]:
+                    cols[i].button(word, key=f"btn_{i}", disabled=True)
+                else:
+                    masked = word[0] + "*" * (len(word) - 1) if len(word) > 1 else "*"
+                    if cols[i].button(masked, key=f"btn_{i}"):
+                        st.session_state.revealed[i] = True
+                        st.rerun()
+
+        # 4. Kiểm tra câu trả lời
+        user_input = st.text_input("Nhập câu hoàn chỉnh:", key="user_input")
         
-    # Khởi tạo trạng thái cho câu hiện tại
-    if 'revealed' not in st.session_state:
-        st.session_state.revealed = [False] * len(st.session_state.shuffled_list[0]["en"].split())
-
-    # Lấy câu hiện tại từ danh sách đã xáo trộn
-    cau_hien_tai = st.session_state.shuffled_list[st.session_state.current_idx]
-    words = cau_hien_tai["en"].split()
-
-    st.write(f"Dịch câu: **{cau_hien_tai['vi']}**")
-
-    # 3. Khu vực hiển thị gợi ý
-    container = st.container(border=True)
-    with container:
-        cols = st.columns(len(words))
-        for i, word in enumerate(words):
-            if st.session_state.revealed[i]:
-                cols[i].button(word, key=f"btn_{i}", disabled=True)
-            else:
-                masked = word[0] + "*" * (len(word) - 1) if len(word) > 1 else "*"
-                if cols[i].button(masked, key=f"btn_{i}"):
-                    st.session_state.revealed[i] = True
-                    st.rerun()
-
-    # 4. Kiểm tra và chuyển câu
-    user_input = st.text_input("Nhập câu hoàn chỉnh:", key="user_input")
-    if st.button("Kiểm tra"):
-        if user_input.strip().lower() == cau_hien_tai["en"].lower():
-            st.success("Chính xác! Đang tải câu mới...")
-            
-            # Chuyển sang câu kế tiếp
-            st.session_state.current_idx += 1
-            
-            # Nếu hết danh sách thì xáo trộn lại từ đầu
-            if st.session_state.current_idx >= len(st.session_state.shuffled_list):
-                random.shuffle(st.session_state.shuffled_list)
-                st.session_state.current_idx = 0
+        if st.button("Kiểm tra"):
+            if user_input.strip().lower() == cau_hien_tai["en"].lower():
+                st.session_state.correct_answered = True
+                st.session_state.correct_time = time.time()  # Ghi lại mốc thời gian trả lời đúng
+                st.session_state.stop_countdown = False       # Reset trạng thái dừng đếm ngược
                 
-            st.session_state.revealed = [False] * len(st.session_state.shuffled_list[st.session_state.current_idx]["en"].split())
-            st.rerun() 
-        else:
-            st.error("Chưa đúng, thử lại nhé!")
+                # Gọi AI giải thích cấu trúc ngữ pháp (Chỉ gọi duy nhất 1 lần tại đây để lưu vào session_state)
+                try:
+                    with st.spinner("Chính xác! Đang kết nối AI phân tích ngữ pháp câu này..."):
+                        client = Groq(api_key=api_key)
+                        prompt = f"""
+                        Phân tích chi tiết cấu trúc ngữ pháp của câu tiếng Anh: "{cau_hien_tai['en']}" (Nghĩa là: "{cau_hien_tai['vi']}").
+                        Hãy trình bày bằng tiếng Việt mạch lạc, định dạng markdown đẹp mắt bao gồm:
+                        - Cấu trúc các thành phần chính (Chủ ngữ S, Vị ngữ V, Tân ngữ O nếu có).
+                        - Thì (Tense) của câu và các điểm cấu trúc ngữ pháp quan trọng cần nhớ.
+                        - Giải thích ngắn gọn bối cảnh hay lưu ý khi sử dụng câu/cụm từ này.
+                        """
+                        response = client.chat.completions.create(
+                            model="llama-3.1-8b-instant",
+                            messages=[{"role": "user", "content": prompt}],
+                            temperature=0.3
+                        )
+                        st.session_state.ai_explanation = response.choices[0].message.content
+                except Exception as e:
+                    st.session_state.ai_explanation = "⚠️ Không thể tải phân tích cấu trúc từ AI lúc này, bạn hãy học tiếp câu sau nhé!"
+                st.rerun()
+            else:
+                st.error("Chưa đúng, thử lại nhé!")
+                st.session_state.correct_answered = False
+
+        # 5. Khu vực hiển thị Giải thích & Đếm ngược tự động chuyển câu
+        if st.session_state.correct_answered:
+            st.success("🎉 Bạn đã viết chính xác câu này!")
+            
+            # Hiển thị phân tích cấu trúc ngữ pháp từ AI
+            st.markdown("### 🧠 Phân Tích Cấu Trúc Ngữ Pháp")
+            st.info(st.session_state.ai_explanation)
+            
+            # Kiểm tra xem người dùng có nhấn nút Dừng lại hay chưa
+            if not st.session_state.stop_countdown:
+                elapsed = time.time() - st.session_state.correct_time
+                remaining = int(10 - elapsed)
+                
+                if remaining > 0:
+                    st.write(f"⏱️ Hệ thống sẽ tự động chuyển câu mới sau **{remaining}** giây...")
+                    if st.button("⏸️ Dừng đếm ngược (Để chép bài / Xem kỹ hơn)"):
+                        st.session_state.stop_countdown = True
+                        st.rerun()
+                    time.sleep(1)
+                    st.rerun()  # Ép giao diện vẽ lại mỗi 1 giây để cập nhật đồng hồ đếm ngược
+                else:
+                    # Đã hết 10 giây và không bấm dừng -> Tự động chuyển câu mới
+                    st.session_state.correct_answered = False
+                    st.session_state.current_idx += 1
+                    
+                    if st.session_state.current_idx >= len(st.session_state.shuffled_list):
+                        random.shuffle(st.session_state.shuffled_list)
+                        st.session_state.current_idx = 0
+                    
+                    st.session_state.revealed = [False] * len(st.session_state.shuffled_list[st.session_state.current_idx]["en"].split())
+                    if "user_input" in st.session_state:
+                        st.session_state.user_input = ""  # Xóa sạch text trong ô nhập liệu cũ
+                    st.rerun()
+            else:
+                st.warning("⏸️ Đã dừng đếm ngược. Bạn có thể thong thả nghiên cứu cấu trúc câu.")
+                if st.button("Chuyển sang câu tiếp theo ➡️"):
+                    st.session_state.correct_answered = False
+                    st.session_state.current_idx += 1
+                    
+                    if st.session_state.current_idx >= len(st.session_state.shuffled_list):
+                        random.shuffle(st.session_state.shuffled_list)
+                        st.session_state.current_idx = 0
+                        
+                    st.session_state.revealed = [False] * len(st.session_state.shuffled_list[st.session_state.current_idx]["en"].split())
+                    if "user_input" in st.session_state:
+                        st.session_state.user_input = ""
+                    st.rerun()
 with tab3:
         st.subheader("📚 Từ Vựng Chuyên Ngành")
         
